@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JouleDesk: see what your PC's electricity use costs</title>
+<meta name="description" content="A free Windows app that shows how much power your PC draws and what it costs, live, per day and per month, with Finnish spot electricity prices or your own contract. No smart plug or other extra hardware needed.">
+<link rel="canonical" href="https://paulakarhi.github.io/JouleDesk/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="JouleDesk: see what your PC's electricity use costs">
+<meta property="og:description" content="A free Windows app that shows how much power your PC draws and what it costs. No smart plug needed.">
+<meta property="og:url" content="https://paulakarhi.github.io/JouleDesk/">
+<meta property="og:image" content="https://paulakarhi.github.io/JouleDesk/images/overview.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root {
+    --background: #0e1419;
+    --surface: #182229;
+    --border: #2a3740;
+    --text: #ebf3f4;
+    --muted: #899da8;
+    --accent: #6be9bf;
+    --accent-dark: #245545;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--text);
+    font: 17px/1.6 "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  a { color: var(--accent); }
+  main, header, footer { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+  header { display: flex; align-items: center; justify-content: space-between; padding-top: 20px; padding-bottom: 20px; }
+  .brand { font-weight: 700; letter-spacing: .04em; text-decoration: none; color: var(--text); }
+  header nav a { margin-left: 20px; color: var(--muted); text-decoration: none; }
+  header nav a:hover { color: var(--text); }
+  .hero { padding: 40px 0 24px; text-align: center; }
+  h1 { font-size: clamp(32px, 6vw, 52px); line-height: 1.15; margin: 0 0 16px; }
+  .lead { max-width: 680px; margin: 0 auto 28px; color: var(--muted); font-size: 19px; }
+  .buttons { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+  .button {
+    display: inline-block; padding: 12px 24px; border-radius: 10px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); color: var(--text); background: var(--surface);
+  }
+  .button.primary { background: var(--accent); border-color: var(--accent); color: #0e1419; }
+  .button:hover { filter: brightness(1.08); }
+  .facts { margin: 14px 0 0; color: var(--muted); font-size: 15px; }
+  .demo { margin: 36px auto 8px; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--surface); }
+  .demo img { display: block; width: 100%; height: auto; }
+  section { padding: 36px 0 8px; }
+  h2 { font-size: 28px; margin: 0 0 18px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+  .card h3 { margin: 0 0 8px; font-size: 19px; color: var(--accent); }
+  .card p { margin: 0; color: var(--muted); font-size: 16px; }
+  .shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .shots figure { margin: 0; }
+  .shots img { display: block; width: 100%; height: auto; border: 1px solid var(--border); border-radius: 12px; }
+  figcaption { margin-top: 8px; color: var(--muted); font-size: 15px; }
+  details { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; margin-bottom: 10px; }
+  summary { cursor: pointer; font-weight: 600; }
+  details p { margin: 10px 0 0; color: var(--muted); }
+  footer { padding-top: 40px; padding-bottom: 48px; color: var(--muted); font-size: 14px; border-top: 1px solid var(--border); margin-top: 48px; }
+  footer p { margin: 0 0 8px; }
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="./">JOULEDESK</a>
+  <nav>
+    <a href="https://github.com/paulakarhi/JouleDesk">GitHub</a>
+    <a href="https://github.com/paulakarhi/JouleDesk/discussions">Discussions</a>
+  </nav>
+</header>
+
+<main>
+  <div class="hero">
+    <h1>See what your PC's electricity use costs</h1>
+    <p class="lead">JouleDesk shows how much power your Windows computer draws and what that costs, live, per day and per month. It needs no smart plug, power meter or other extra hardware.</p>
+    <div class="buttons">
+      <a class="button primary" href="https://github.com/paulakarhi/JouleDesk/releases/latest">Download for Windows</a>
+      <a class="button" href="https://github.com/paulakarhi/JouleDesk">View on GitHub</a>
+    </div>
+    <p class="facts">Free and open source (MIT) · Windows 10 and 11, 64-bit · version 1.0.0</p>
+    <div class="demo">
+      <img src="images/demo.gif" alt="A walk through JouleDesk: the overview, the history curve and the day's spot prices with the pointer resting on the charts, and the components page" width="820" height="601">
+    </div>
+  </div>
+
+  <section>
+    <h2>What it does</h2>
+    <div class="cards">
+      <div class="card">
+        <h3>No extra hardware</h3>
+        <p>The processor's power comes from the energy counter Windows already keeps, the NVIDIA graphics card's power from its driver, and the rest is estimated. Every figure says which kind it is.</p>
+      </div>
+      <div class="card">
+        <h3>Your electricity prices</h3>
+        <p>Prices the energy with Finnish spot prices, spot plus your contract charges, or a fixed price. Switch plans and the recorded energy is priced again, so you can compare.</p>
+      </div>
+      <div class="card">
+        <h3>History and daily prices</h3>
+        <p>A curve of the energy used each day of a month, the cost, a CSV export, and a chart of the day's spot prices from cheap to expensive.</p>
+      </div>
+      <div class="card">
+        <h3>Stays on your PC</h3>
+        <p>No account, no cloud and no telemetry. Your consumption and hardware are never sent anywhere. It only fetches the day's spot prices.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Screenshots</h2>
+    <div class="shots">
+      <figure><img src="images/history.png" alt="The history page with a curve of the energy used each day of a month" loading="lazy"><figcaption>History: the energy used on each day of a month, with its cost.</figcaption></figure>
+      <figure><img src="images/prices.png" alt="The prices page with the day's spot prices as bars from cheap to expensive" loading="lazy"><figcaption>Prices: the day's spot prices, with the average and the current moment marked.</figcaption></figure>
+      <figure><img src="images/components.png" alt="The components page listing the power of each part and the source of each figure" loading="lazy"><figcaption>Components: the power of each part and where the figure comes from.</figcaption></figure>
+      <figure><img src="images/overview.png" alt="The overview page with live power, today's and this month's cost" loading="lazy"><figcaption>Overview: live power and what today and this month have cost.</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Questions</h2>
+    <details>
+      <summary>Do I need a smart plug or a power meter?</summary>
+      <p>No. JouleDesk estimates the draw at the wall from the processor and graphics card readings plus labelled estimates for the rest. The result is an estimate, not a wall-socket measurement; a plug-in energy meter is only needed if you want to measure that.</p>
+    </details>
+    <details>
+      <summary>Which computers does it work on?</summary>
+      <p>It needs Windows 10 or 11 (64-bit), a processor whose package energy counter Windows exposes (Intel processors do) and an NVIDIA graphics card with its driver. Without both readings nothing is recorded. Other hardware has not been tried, and you can tell what works for you in the <a href="https://github.com/paulakarhi/JouleDesk/discussions/2">discussion about compatibility</a>.</p>
+    </details>
+    <details>
+      <summary>Why does Windows warn me about the installer?</summary>
+      <p>The installer is not code-signed, so Windows SmartScreen may show a warning. Choose "More info" and then "Run anyway". The release page lists the SHA-256 checksum of the installer, so you can check your download.</p>
+    </details>
+    <details>
+      <summary>Is anything sent anywhere?</summary>
+      <p>No data about you or your computer. The app fetches the Finnish spot prices from the free Pörssisähkö.net service about twice a day, and, if you enter an address, a drive profile catalog from it. The <a href="https://github.com/paulakarhi/JouleDesk#privacy">privacy section</a> lists everything it stores and every connection it makes.</p>
+    </details>
+    <details>
+      <summary>Which prices does it use?</summary>
+      <p>Finnish spot prices with VAT, in euros and Finnish time, or your own contract: spot price plus your margin, distribution charge and electricity tax, or a fixed price plus distribution and tax.</p>
+    </details>
+    <details>
+      <summary>How do I remove it?</summary>
+      <p>Uninstall JouleDesk from Windows' list of installed apps. Your recorded data stays in <code>%LOCALAPPDATA%\JouleDesk</code> until you delete that folder.</p>
+    </details>
+  </section>
+</main>
+
+<footer>
+  <p><a href="https://github.com/paulakarhi/JouleDesk/releases/latest">Download</a> · <a href="https://github.com/paulakarhi/JouleDesk/blob/main/docs/UserGuide.md">User guide</a> · <a href="https://github.com/paulakarhi/JouleDesk">Source code</a> · <a href="https://github.com/paulakarhi/JouleDesk/blob/main/LICENSE">MIT License</a></p>
+  <p>Copyright (c) 2026 Paula Karhi. Electricity prices come from <a href="https://porssisahko.net/">Pörssisähkö.net</a>. Intel, NVIDIA, Kingston and Windows are trademarks of their owners. JouleDesk is not affiliated with or endorsed by any of them.</p>
+</footer>
+</body>
+</html>
