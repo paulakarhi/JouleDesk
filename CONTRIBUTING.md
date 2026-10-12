@@ -2,6 +2,8 @@
 
 Bug reports, ideas and pull requests are welcome.
 
+Everyone taking part is expected to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
+
 ## Reporting a problem
 
 Open an issue and tell which version of JouleDesk, which Windows version, processor and graphics card you have. For a
