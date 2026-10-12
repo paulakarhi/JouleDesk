@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Question, or a report of what works on your hardware
+    url: https://github.com/paulakarhi/JouleDesk/discussions
+    about: Ask a question, or tell which processor and graphics card you use and whether JouleDesk records on them

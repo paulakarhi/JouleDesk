@@ -17,12 +17,14 @@ that you can adjust. The result is an estimate of the PC's draw at the wall, not
 
 Everything runs on your PC. There is no account, no cloud service and no telemetry.
 
-<img src="docs/images/overview.png" alt="The overview page: live power of the CPU, the GPU and the whole PC, today's and this month's cost, and the last ten minutes of power draw" width="820">
+<img src="docs/images/demo.gif" alt="A walk through JouleDesk: the overview, the history curve and the day's spot prices with the pointer resting on the charts, and the components page" width="820">
 
 ## Screenshots
 
 The overview shows the live power of the CPU, the GPU and the whole PC, the price of electricity now, what today and
 this month have cost so far, and a curve of the last ten minutes.
+
+<img src="docs/images/overview.png" alt="The overview page: live power of the CPU, the GPU and the whole PC, today's and this month's cost, and the last ten minutes of power draw" width="820">
 
 The history page opens with a curve of the energy used on each day of a month, with the month's total, its cost and
 its busiest day. Point at the curve to see a day's energy and cost; the arrows move between months. The days are
