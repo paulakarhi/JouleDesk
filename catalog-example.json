@@ -1,0 +1,7 @@
+{
+  "Version": 1,
+  "Disks": [
+    { "Model": "KINGSTON SKC3000S1024G", "IdleWatts": 0.05, "ReadWatts": 2.8, "WriteWatts": 6.3, "TypicalWatts": 0.33, "Source": "https://www.kingston.com/datasheets/KC3000_en.pdf" },
+    { "Model": "KINGSTON SFYRS1000G", "IdleWatts": 0.05, "ReadWatts": 2.8, "WriteWatts": 6.3, "TypicalWatts": 0.33, "Source": "https://www.kingston.com/en/ssd/gaming/kingston-fury-renegade-nvme-m2-ssd" }
+  ]
+}

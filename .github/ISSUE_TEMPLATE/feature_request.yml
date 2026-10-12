@@ -1,0 +1,11 @@
+name: Idea or request
+description: Suggest something JouleDesk could do
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like to see?
+      description: Describe what you need, and what you do today without it.
+    validations:
+      required: true

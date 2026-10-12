@@ -1,0 +1,33 @@
+name: Bug report
+description: Something does not work, or a value looks wrong
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you expect, and what did you see instead?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: JouleDesk version
+      placeholder: "1.0.0"
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: "Windows 11 24H2"
+  - type: input
+    id: hardware
+    attributes:
+      label: Processor and graphics card
+  - type: textarea
+    id: sources
+    attributes:
+      label: Data sources
+      description: On the Components page press "Data sources" and paste the file here. It lists the components found and where each figure comes from.
+      render: text
