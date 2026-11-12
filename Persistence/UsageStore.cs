@@ -6,16 +6,21 @@ namespace JouleDesk;
 /// <summary>
 /// The user's data folder: settings, cached spot prices and the recorded usage history.
 /// Usage is appended as JSON lines; the other files are replaced atomically.
+/// Recent usage is kept minute by minute; <see cref="CompactBefore"/> joins old usage into quarter hours.
 /// </summary>
 internal sealed class UsageStore
 {
     public static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
     private const int TailBytes = 1024;
-    private static readonly long QuarterHourTicks = TimeSpan.FromMinutes(15).Ticks;
+    private const long MaxSettingsBytes = 64 * 1024;
+    private const long MaxPriceFileBytes = 64 * 1024 * 1024;
 
     private readonly List<UsageRecord> history = new();
     private readonly Dictionary<DateTime, UsageTotals> dailyTotals = new();
+
+    /// <summary>How many days back usage stays minute by minute before <see cref="CompactBefore"/> joins it into quarter hours.</summary>
+    public const int MinuteDetailDays = 92;
 
     public UsageStore(string? folder = null)
     {
@@ -51,37 +56,39 @@ internal sealed class UsageStore
     public void SaveSettings(ApplicationSettings candidate)
     {
         SettingsValidator.Validate(candidate);
-        AtomicFile.Write(PathOf(DataFiles.Settings), JsonSerializer.Serialize(candidate, JsonOptions));
+        DataFile.Write(PathOf(DataFiles.Settings), JsonSerializer.Serialize(candidate, JsonOptions));
         Settings = candidate;
     }
 
     /// <summary>
     /// Records new intervals. They must be valid and may not overlap anything already recorded.
-    /// Neighbouring intervals within the same quarter hour are joined into one record, so a day of five-second samples
-    /// takes up 96 records instead of 17 280. The totals and the cost of a joined record equal the sum of its parts.
+    /// Intervals are cut at every minute boundary and the pieces within one minute are joined into one record,
+    /// so a day of five-second samples takes up 1 440 records instead of 17 280.
+    /// The totals and the cost of a joined record equal the sum of its parts.
     /// </summary>
     public void Append(IEnumerable<UsageRecord> rows)
     {
-        var items = rows.ToList();
-        if (items.Count == 0)
+        var received = rows.ToList();
+        if (received.Count == 0)
             return;
 
         var lastEnd = history.Count == 0 ? DateTimeOffset.MinValue : history[^1].End;
-        foreach (var row in items)
+        foreach (var row in received)
         {
             if (!IsValid(row) || row.Start < lastEnd)
                 throw new InvalidDataException(Localization.Translate("Invalid or overlapping usage interval."));
             lastEnd = row.End;
         }
 
+        var items = received.SelectMany(row => UsageBuckets.Cut(row, UsageBuckets.Minute)).ToList();
         bool joinsLast;
         List<UsageRecord> written;
         using (var stream = new FileStream(PathOf(DataFiles.Usage), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read))
         {
             // The last stored line is replaced by its joined version, but only when it really is the last record.
             var lineStart = 0L;
-            joinsLast = history.Count > 0 && CanJoin(history[^1], items[0]) && EndsWithRecord(stream, history[^1], out lineStart);
-            written = Join(joinsLast ? history[^1] : null, items);
+            joinsLast = history.Count > 0 && CanJoin(history[^1], items[0], UsageBuckets.Minute) && EndsWithRecord(stream, history[^1], out lineStart);
+            written = Join(joinsLast ? history[^1] : null, items, UsageBuckets.Minute);
 
             if (joinsLast)
             {
@@ -114,14 +121,58 @@ internal sealed class UsageStore
     {
         var incoming = SpotPrices.Validate(fresh);
         var superseded = incoming.SelectMany(price => SpotPrices.Between(Prices, price.Start, price.End)).ToHashSet();
-        var merged = SpotPrices.Validate(Prices.Where(price => !superseded.Contains(price)).Concat(incoming));
+        var merged = SpotPrices.Recent(SpotPrices.Validate(Prices.Where(price => !superseded.Contains(price)).Concat(incoming)));
 
-        AtomicFile.Write(PathOf(DataFiles.Prices), JsonSerializer.Serialize(merged, JsonOptions));
+        DataFile.Write(PathOf(DataFiles.Prices), JsonSerializer.Serialize(merged));
         Prices = merged;
         PriceUnpricedHistory();
     }
 
     public void Export(string path) => CsvExporter.Write(path, history, Settings);
+
+    /// <summary>The records that overlap the span from <paramref name="start"/> up to <paramref name="end"/>, in time order.</summary>
+    public IEnumerable<UsageRecord> RecordsBetween(DateTimeOffset start, DateTimeOffset end)
+    {
+        int low = 0, high = history.Count;
+        while (low < high)
+        {
+            var middle = (low + high) / 2;
+            if (history[middle].End > start)
+                high = middle;
+            else
+                low = middle + 1;
+        }
+        for (var index = low; index < history.Count && history[index].Start < end; index++)
+            yield return history[index];
+    }
+
+    /// <summary>
+    /// Joins the usage that ended before <paramref name="cutoff"/> into quarter-hour records, so that the history stays
+    /// small however long the app runs. Energy and cost do not change, only the detail. A failure to rewrite the
+    /// file leaves it as it was, and the next start tries again.
+    /// </summary>
+    /// <returns>How many records the history lost.</returns>
+    public int CompactBefore(DateTimeOffset cutoff)
+    {
+        var oldCount = history.Count(row => row.End <= cutoff);
+        var compacted = Join(null, history.Take(oldCount), UsageBuckets.QuarterHour);
+        if (compacted.Count == oldCount)
+            return 0;
+
+        var rewritten = compacted.Concat(history.Skip(oldCount)).ToList();
+        try
+        {
+            DataFile.Write(PathOf(DataFiles.Usage), string.Concat(rewritten.Select(row => JsonSerializer.Serialize(row) + Environment.NewLine)));
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            return 0;
+        }
+        var removed = history.Count - rewritten.Count;
+        history.Clear();
+        history.AddRange(rewritten);
+        return removed;
+    }
 
     private string PathOf(string fileName) => Path.Combine(Folder, fileName);
 
@@ -133,7 +184,7 @@ internal sealed class UsageStore
 
         try
         {
-            var settings = JsonSerializer.Deserialize<ApplicationSettings>(File.ReadAllText(path))
+            var settings = JsonSerializer.Deserialize<ApplicationSettings>(DataFile.Read(path, MaxSettingsBytes))
                 ?? throw new JsonException(Localization.Translate("Settings must be an object."));
             return SettingsValidator.Normalize(settings);
         }
@@ -152,7 +203,7 @@ internal sealed class UsageStore
 
         try
         {
-            var prices = JsonSerializer.Deserialize<List<SpotPrice>>(File.ReadAllText(path));
+            var prices = JsonSerializer.Deserialize<List<SpotPrice>>(DataFile.Read(path, MaxPriceFileBytes));
             if (prices is { Count: > 0 })
                 Prices = SpotPrices.Validate(prices);
         }
@@ -213,7 +264,7 @@ internal sealed class UsageStore
             return;
 
         var lines = rewritten.Select(row => JsonSerializer.Serialize(row) + Environment.NewLine);
-        AtomicFile.Write(PathOf(DataFiles.Usage), string.Concat(lines));
+        DataFile.Write(PathOf(DataFiles.Usage), string.Concat(lines));
         history.Clear();
         history.AddRange(rewritten);
         dailyTotals.Clear();
@@ -229,21 +280,19 @@ internal sealed class UsageStore
         }
     }
 
-    private static long QuarterHour(DateTimeOffset instant) => instant.UtcTicks / QuarterHourTicks;
-
-    // Joined records stay within one quarter hour, which never straddles a price interval or Finnish midnight.
-    private static bool CanJoin(UsageRecord previous, UsageRecord next) =>
+    // Joined records stay within one bucket, a minute or a quarter hour, which never straddles a price interval or Finnish midnight.
+    private static bool CanJoin(UsageRecord previous, UsageRecord next, TimeSpan bucket) =>
         previous.End == next.Start && previous.ExtraCents == next.ExtraCents && previous.Euros.HasValue == next.Euros.HasValue &&
-        QuarterHour(previous.Start) == QuarterHour(next.End - TimeSpan.FromTicks(1));
+        UsageBuckets.Of(previous.Start, bucket) == UsageBuckets.Of(next.End - TimeSpan.FromTicks(1), bucket);
 
-    private static List<UsageRecord> Join(UsageRecord? first, IEnumerable<UsageRecord> rows)
+    private static List<UsageRecord> Join(UsageRecord? first, IEnumerable<UsageRecord> rows, TimeSpan bucket)
     {
         var joined = new List<UsageRecord>();
         if (first is not null)
             joined.Add(first);
         foreach (var row in rows)
         {
-            if (joined.Count > 0 && CanJoin(joined[^1], row))
+            if (joined.Count > 0 && CanJoin(joined[^1], row, bucket))
             {
                 var last = joined[^1];
                 joined[^1] = last with { End = row.End, Kwh = last.Kwh + row.Kwh, Euros = last.Euros + row.Euros };

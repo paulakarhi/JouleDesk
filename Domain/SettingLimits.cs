@@ -12,4 +12,10 @@ internal static class SettingLimits
 
     /// <summary>Distribution charge and electricity tax.</summary>
     public static readonly ValueRange Charge = new(0, 100);
+
+    /// <summary>Longest web address accepted for the drive profile catalog.</summary>
+    public const int UrlLength = 2048;
+
+    /// <summary>Longest text a number field takes; far more than any accepted value needs.</summary>
+    public const int NumberLength = 16;
 }

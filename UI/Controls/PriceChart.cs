@@ -66,21 +66,11 @@ internal sealed class PriceChart : ChartControl<PriceBar>
         return ChartBubble.Place(ChartBubble.Measure(TooltipLines(bar)), Size, CenterOf(bar, plot), barTop);
     }
 
-    /// <summary>The colour of a price within a day: mint at the lowest price, amber in the middle and coral at the highest.</summary>
-    internal static Color LevelColor(double cents, double lowest, double highest)
-    {
-        if (highest - lowest < 0.01)
-            return Accent;
-
-        var position = Math.Clamp((cents - lowest) / (highest - lowest), 0, 1);
-        return position < 0.5 ? Blend(Accent, Warning, position * 2) : Blend(Warning, Expensive, (position - 0.5) * 2);
-    }
-
     protected override void OnPaint(PaintEventArgs e)
     {
         var g = e.Graphics;
         PaintCard(g);
-        PaintHeader(g, title, day is null ? "" : Localization.Translate(DayLabel(day.Date)), Summary());
+        PaintHeader(g, title, day is null ? "" : DisplayFormat.DayLabel(day.Date), Summary());
 
         if (day is null || day.Bars.Count == 0)
         {
@@ -138,11 +128,11 @@ internal sealed class PriceChart : ChartControl<PriceBar>
             var valueY = axis.YOf(bar.Cents, plot);
             var rectangle = new Rectangle(left, (int)Math.Min(valueY, baseline), width, Math.Max(1, (int)Math.Abs(valueY - baseline)));
 
-            var color = LevelColor(bar.Cents, lowest, highest);
+            var color = ChartColors.Level(bar.Cents, lowest, highest);
             if (bar == Hovered)
-                color = Blend(color, Color.White, HoverLightening);
+                color = ChartColors.Blend(color, Color.White, HoverLightening);
             else if (isToday && bar.End <= now)
-                color = Blend(color, Surface, PastFade);
+                color = ChartColors.Blend(color, Surface, PastFade);
             FillBar(g, rectangle, color, roundedAtBottom: bar.Cents < 0);
         }
     }
@@ -178,7 +168,7 @@ internal sealed class PriceChart : ChartControl<PriceBar>
     // Prices below one cent still need an axis, so the scale spans at least one cent.
     private static ChartAxis AxisFor(DayPrices day) => ChartAxis.For(day.Lowest!.Cents, day.Highest!.Cents, minimumRange: 1);
 
-    private static IReadOnlyList<(string Text, TextStyle Style)> TooltipLines(PriceBar bar) => new[]
+    private static (string Text, TextStyle Style)[] TooltipLines(PriceBar bar) => new[]
     {
         ($"{FinnishTime.ToLocal(bar.Start).ToString(DisplayFormat.Time)}–{FinnishTime.ToLocal(bar.End).ToString(DisplayFormat.Time)}", new TextStyle(9, SecondaryText)),
         ($"{bar.Cents:F2} {Localization.Translate("ct/kWh")}", new TextStyle(12, Foreground, Bold: true))
@@ -189,7 +179,7 @@ internal sealed class PriceChart : ChartControl<PriceBar>
     {
         using var path = BarShape(bar, roundedAtBottom);
         using var brush = new LinearGradientBrush(
-            new Rectangle(bar.X, bar.Y, bar.Width, Math.Max(1, bar.Height)), color, Blend(color, Surface, BottomFade), LinearGradientMode.Vertical);
+            new Rectangle(bar.X, bar.Y, bar.Width, Math.Max(1, bar.Height)), color, ChartColors.Blend(color, Surface, BottomFade), LinearGradientMode.Vertical);
         g.FillPath(brush, path);
     }
 
@@ -220,11 +210,6 @@ internal sealed class PriceChart : ChartControl<PriceBar>
         return path;
     }
 
-    private static Color Blend(Color from, Color to, double amount) => Color.FromArgb(
-        (int)Math.Round(from.R + (to.R - from.R) * amount),
-        (int)Math.Round(from.G + (to.G - from.G) * amount),
-        (int)Math.Round(from.B + (to.B - from.B) * amount));
-
     private string Summary()
     {
         if (day is not { Average: { } average, Lowest: { } lowest, Highest: { } highest })
@@ -233,17 +218,5 @@ internal sealed class PriceChart : ChartControl<PriceBar>
         string TimeOf(PriceBar bar) => FinnishTime.ToLocal(bar.Start).ToString(DisplayFormat.Time);
         return Localization.Format("Average {0} · lowest {1} at {2} · highest {3} at {4}",
             $"{average:F2}", $"{lowest.Cents:F2}", TimeOf(lowest), $"{highest.Cents:F2}", TimeOf(highest));
-    }
-
-    private static string DayLabel(DateTime date)
-    {
-        var relative = (date - FinnishTime.Today).Days switch
-        {
-            -1 => "Yesterday",
-            0 => "Today",
-            1 => "Tomorrow",
-            _ => null
-        };
-        return relative is null ? date.ToString("dddd d.M.") : $"{Localization.Translate(relative)} · {date:d.M.}";
     }
 }

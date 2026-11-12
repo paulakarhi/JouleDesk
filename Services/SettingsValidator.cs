@@ -2,8 +2,10 @@ namespace JouleDesk;
 
 internal static class SettingsValidator
 {
+    /// <summary>A plain HTTPS address: no sign-in details in it, no spaces or control characters, and not longer than <see cref="SettingLimits.UrlLength"/>.</summary>
     public static bool IsHttpsUrl(string? value) =>
-        Uri.TryCreate(value, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps;
+        value is { Length: <= SettingLimits.UrlLength } && !value.Any(character => char.IsWhiteSpace(character) || char.IsControl(character)) &&
+        Uri.TryCreate(value, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps && uri.UserInfo.Length == 0;
 
     /// <summary>Replaces every out-of-range or malformed value with its default.</summary>
     public static ApplicationSettings Normalize(ApplicationSettings settings)

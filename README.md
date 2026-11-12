@@ -53,6 +53,9 @@ The electricity plan and the settings:
 - Live power of the CPU, the GPU and the whole PC, sampled every five seconds, with a ten-minute curve
 - Costs per day and per month, and a curve of the energy used on each day of a month with its total, its cost and its
   busiest day
+- The power of every minute of a day as a bar chart, coloured from the day's lowest to its highest minute, with a
+  bubble that shows the power, energy and cost of the minute you point at. A second chart magnifies one hour so that
+  every minute has its own bar. Click a day on the history curve to open it.
 - Spot prices for Finland as a bar chart, one bar per price period (hourly or quarter-hourly), with the average and
   the current moment marked and a bubble with the time and price of the bar you point at. The arrows move between the
   days that have prices.
@@ -112,8 +115,8 @@ dotnet build JouleDesk.csproj -c Release
 dotnet publish JouleDesk.csproj -c Release -r win-x64 -o publish   # publish\JouleDesk.exe, one self-contained file
 ```
 
-The installer needs [Inno Setup 7](https://jrsoftware.org/isinfo.php). Compile `installer.iss` with `ISCC.exe` after
-publishing; the installer takes its version from the published executable and writes
+The installer needs [Inno Setup 7](https://jrsoftware.org/isinfo.php). Compile `installer\installer.iss` with `ISCC.exe`
+after publishing; the installer takes its version from the published executable and writes
 `installer-output\JouleDesk-Setup-<version>.exe`.
 
 ### Command-line options
@@ -131,16 +134,17 @@ Services/      Energy and tariff calculation, price lookup and fetch schedule, t
 Hardware/      Windows counters, GPU telemetry, component estimates
 Persistence/   Settings, price cache and history files, CSV export
 Platform/      Start with Windows, single-instance signalling, app icon, shell launching
-Resources/     Translations (locales.tsv, the English text is the key) and embedded resources
+Resources/     Number and date formats, the translation lookup (the English text is the key)
+assets/        Files embedded in the app: the icon, the translations (locales.tsv) and the bundled drive profiles
 UI/            The window, its pages and its controls. Pages paint their own content and add their own
                controls; the window only hosts them.
-installer.iss  Inno Setup script
+installer/     Inno Setup script
 ```
 
 Spot prices are validated and kept in order without overlaps, so lookups use binary search. Daily totals are indexed
-when records are added instead of being summed while painting, and neighbouring readings are joined into records of
-at most a quarter hour, which keeps the history small. The same pricing rules drive the live display, the daily totals
-and the CSV export.
+when records are added instead of being summed while painting. Neighbouring readings are joined into one record per
+minute, and usage older than 92 days into records of a quarter hour, which keeps the history small however long the
+app runs. The same pricing rules drive the live display, the daily totals, the minute chart and the CSV export.
 
 ## Limitations
 
@@ -161,6 +165,8 @@ and the CSV export.
   whatever the language of the interface.
 - **Gaps.** Nothing is recorded, or made up, while the app is not running, the PC is asleep, monitoring is paused or
   a sensor cannot be read. A pause between two samples of more than twenty seconds is left unrecorded.
+- **Minute detail.** Usage is kept minute by minute for 92 days. Older usage is joined into quarter hours, so an older
+  day shows the same power for each quarter hour. Energy and cost do not change.
 - **The price service.** The prices come from a free service run by one person. If it cannot be reached the cached
   prices are used, and energy without a price stays unpriced until the price arrives. The next day's prices usually
   appear in the afternoon.
@@ -188,7 +194,7 @@ What stays on the computer, in `%LOCALAPPDATA%\JouleDesk`:
 
 | File | Contents |
 | --- | --- |
-| `usage.jsonl` | The recorded energy and its cost, in intervals of at most a quarter hour |
+| `usage.jsonl` | The recorded energy and its cost, one record per minute, joined into quarter hours after 92 days |
 | `settings.json` | Your plan, estimation assumptions and the optional catalog address |
 | `prices.json` | The spot prices fetched most recently |
 | `components.json` | The drive profile catalog downloaded from your address, if you set one |
@@ -196,6 +202,20 @@ What stays on the computer, in `%LOCALAPPDATA%\JouleDesk`:
 
 The language chosen in the installer and the sign-in entry are stored in your user registry hive. To remove your
 records, delete the data folder. To back them up, quit the app and copy it.
+
+## Security
+
+What JouleDesk reads from outside is checked before it is used. See [SECURITY.md](SECURITY.md) to report a problem.
+
+- Downloads use HTTPS only, do not follow redirects and have a size limit (1 MB for prices, 2 MB for a catalog) and a
+  time limit of fifteen seconds. Prices are checked for plausible values, intervals and number; a catalog entry is
+  checked for its name, its power figures and its source address.
+- An address has to be a plain HTTPS address, without sign-in details, spaces or control characters. Number fields take
+  plain numbers only, and every text field has a length limit.
+- Files in the data folder are read with size limits. A value outside its range is replaced with its default or
+  refused, and a damaged line of the history is skipped.
+- The installer installs for the current user only, needs no administrator rights and installs nothing but the app, its
+  documentation and the licences. The .NET runtime inside the app is kept at a patched version.
 
 ## License
 

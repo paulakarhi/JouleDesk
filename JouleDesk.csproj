@@ -10,7 +10,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>JouleDesk</RootNamespace>
     <AssemblyName>JouleDesk</AssemblyName>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Product>JouleDesk</Product>
     <Authors>Paula Karhi</Authors>
     <Company>Paula Karhi</Company>
@@ -21,11 +21,13 @@
     <ApplicationIcon>assets/app.ico</ApplicationIcon>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>9.0-recommended</AnalysisLevel>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup>
     <SelfContained>true</SelfContained>
+    <RuntimeFrameworkVersion>9.0.23</RuntimeFrameworkVersion>
     <PublishSingleFile>true</PublishSingleFile>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
@@ -34,8 +36,8 @@
 
   <ItemGroup>
     <EmbeddedResource Include="assets/app.ico" LogicalName="JouleDesk.app.ico" />
-    <EmbeddedResource Include="Resources/locales.tsv" LogicalName="JouleDesk.locales.tsv" />
-    <EmbeddedResource Include="catalog-example.json" LogicalName="JouleDesk.drive-profiles.json" />
+    <EmbeddedResource Include="assets/locales.tsv" LogicalName="JouleDesk.locales.tsv" />
+    <EmbeddedResource Include="assets/catalog-example.json" LogicalName="JouleDesk.drive-profiles.json" />
   </ItemGroup>
 
   <ItemGroup>

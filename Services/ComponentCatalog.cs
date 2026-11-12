@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Json;
 
 namespace JouleDesk;
@@ -13,15 +12,11 @@ internal sealed class ComponentCatalog
     private const int MaxProfiles = 10_000;
     private const int MaxModelLength = 200;
     private const int MaxDownloadBytes = 2_000_000;
+    private const long MaxCacheBytes = MaxDownloadBytes;
     private static readonly ValueRange PowerLimit = new(0, 100);
     private static readonly TimeSpan DownloadTimeout = TimeSpan.FromSeconds(15);
     private static readonly JsonSerializerOptions ReadOptions = new() { PropertyNameCaseInsensitive = true };
-
-    // Redirects are refused so a catalog cannot be bounced to a different host than the one configured.
-    private static readonly HttpClient Downloader = new(new HttpClientHandler { AllowAutoRedirect = false })
-    {
-        Timeout = DownloadTimeout
-    };
+    private static readonly BoundedDownload Downloader = new(MaxDownloadBytes, DownloadTimeout);
 
     private static readonly DiskProfile[] Bundled = ReadBundledProfiles();
 
@@ -46,7 +41,7 @@ internal sealed class ComponentCatalog
 
         try
         {
-            Apply(File.ReadAllText(path));
+            Apply(DataFile.Read(path, MaxCacheBytes));
             Status = Localization.Translate("Cached component database");
         }
         catch (Exception exception) when (exception is JsonException or InvalidDataException or IOException or UnauthorizedAccessException)
@@ -63,11 +58,11 @@ internal sealed class ComponentCatalog
         if (!SettingsValidator.IsHttpsUrl(url))
             throw new InvalidDataException(Localization.Translate("Enter an HTTPS catalog URL."));
 
-        var json = await DownloadAsync(new Uri(url), cancellationToken);
+        var json = await Downloader.ReadTextAsync(new Uri(url), cancellationToken);
         var document = Validate(json);
         cancellationToken.ThrowIfCancellationRequested();
 
-        AtomicFile.Write(Path.Combine(folder, DataFiles.Components), json);
+        DataFile.Write(Path.Combine(folder, DataFiles.Components), json);
         Merge(document);
         Status = Localization.Format("Updated {0} · {1} drive models", FinnishTime.Now.ToString(DisplayFormat.DayAndTime), profiles.Count);
     }
@@ -89,7 +84,7 @@ internal sealed class ComponentCatalog
 
     private static void ValidateProfile(DiskProfile? disk)
     {
-        if (disk is null || string.IsNullOrWhiteSpace(disk.Model) || disk.Model.Length > MaxModelLength ||
+        if (disk is null || string.IsNullOrWhiteSpace(disk.Model) || disk.Model.Length > MaxModelLength || disk.Model.Any(char.IsControl) ||
             !SettingsValidator.IsHttpsUrl(disk.Source) || !HasPlausiblePower(disk))
             throw new InvalidDataException(Localization.Translate("Invalid component power values or source."));
     }
@@ -105,28 +100,6 @@ internal sealed class ComponentCatalog
             .GroupBy(profile => profile.Model.Trim(), StringComparer.OrdinalIgnoreCase)
             .Select(group => group.Last())
             .ToList();
-
-    private static async Task<string> DownloadAsync(Uri uri, CancellationToken cancellationToken)
-    {
-        // HttpClient.Timeout stops at the response headers, so the body gets its own deadline.
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(DownloadTimeout);
-
-        using var response = await Downloader.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
-        response.EnsureSuccessStatusCode();
-
-        await using var stream = await response.Content.ReadAsStreamAsync(timeout.Token);
-        using var buffer = new MemoryStream();
-        var chunk = new byte[8192];
-        int read;
-        while ((read = await stream.ReadAsync(chunk, timeout.Token)) > 0)
-        {
-            if (buffer.Length + read > MaxDownloadBytes)
-                throw new InvalidDataException(Localization.Translate("Catalog exceeds the size limit."));
-            buffer.Write(chunk, 0, read);
-        }
-        return Encoding.UTF8.GetString(buffer.GetBuffer(), 0, (int)buffer.Length);
-    }
 
     private static DiskProfile[] ReadBundledProfiles()
     {

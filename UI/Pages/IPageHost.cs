@@ -16,6 +16,9 @@ internal interface IPageHost
 
     void SelectPage(Page page);
 
+    /// <summary>Shows the minute by minute page for a day.</summary>
+    void ShowDay(DateTime day);
+
     void HideToTray();
 
     void Quit();

@@ -1,6 +1,6 @@
-; Per-user installer for JouleDesk. Publish the application first:
+; Per-user installer for JouleDesk. Publish the application first, in the repository folder:
 ;   dotnet publish JouleDesk.csproj -c Release -r win-x64 -o publish
-; then compile this script with Inno Setup 7 (ISCC.exe installer.iss).
+; then compile this script with Inno Setup 7 (ISCC.exe installer\installer.iss).
 ;
 ; The installer test compiles a copy with a different identity, by passing --define=Variant=<name>,
 ; so it never touches a real installation.
@@ -11,7 +11,8 @@
 
 #define AppName "JouleDesk" + Variant
 #define AppExe "JouleDesk.exe"
-#define PublishedExe "publish\" + AppExe
+#define RepoRoot AddBackslash(SourcePath) + "..\"
+#define PublishedExe RepoRoot + "publish\" + AppExe
 
 ; The version is read from the published executable, which gets it from JouleDesk.csproj.
 #define FileVersion GetVersionNumbersString(PublishedExe)
@@ -32,11 +33,12 @@ DefaultDirName={localappdata}\Programs\{#AppName}
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
+MinVersion=10.0
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
-OutputDir=installer-output
+OutputDir={#RepoRoot}installer-output
 OutputBaseFilename={#AppName}-Setup-{#AppVersion}
-SetupIconFile=assets\app.ico
+SetupIconFile={#RepoRoot}assets\app.ico
 UninstallDisplayIcon={app}\{#AppExe}
 Compression=lzma2
 SolidCompression=yes
@@ -68,12 +70,12 @@ Name: "startup"; Description: "{cm:BackgroundStartup}"; GroupDescription: "{cm:O
 
 [Files]
 Source: "{#PublishedExe}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "README.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
-Source: "catalog-example.json"; DestDir: "{app}"; Flags: ignoreversion
-Source: "THIRD-PARTY-NOTICES.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "licenses\*"; DestDir: "{app}\licenses"; Flags: ignoreversion
-Source: "docs\UserGuide.md"; DestDir: "{app}\docs"; Flags: ignoreversion
+Source: "{#RepoRoot}README.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#RepoRoot}LICENSE"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#RepoRoot}assets\catalog-example.json"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#RepoRoot}THIRD-PARTY-NOTICES.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#RepoRoot}licenses\*"; DestDir: "{app}\licenses"; Flags: ignoreversion
+Source: "{#RepoRoot}docs\UserGuide.md"; DestDir: "{app}\docs"; Flags: ignoreversion
 
 [Icons]
 Name: "{userprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"; WorkingDir: "{app}"; AppUserModelID: "{#AppName}.Desktop"

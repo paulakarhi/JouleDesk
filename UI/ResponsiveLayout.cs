@@ -74,6 +74,12 @@ internal sealed class ResponsiveLayout
     /// <summary>The chart card at the top of the page.</summary>
     public Rectangle ChartCard => new(Margin, Top, Width, ChartHeight);
 
+    /// <summary>Where the content below two stacked chart cards starts.</summary>
+    public const int BelowSecondChart = Top + 2 * (ChartHeight + Gap);
+
+    /// <summary>The chart card under <see cref="ChartCard"/>.</summary>
+    public Rectangle SecondChartCard => new(Margin, BelowChart, Width, ChartHeight);
+
     /// <summary>A full-width control inside a card.</summary>
     public Rectangle CardRow(int top, int height) => new(Margin + FieldInset, top, Width - FieldInset * 2, height);
 

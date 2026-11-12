@@ -78,7 +78,7 @@ internal static class ComponentEstimator
     private static bool HasFiniteCounters(DiskActivity activity) =>
         new[] { activity.IdlePercent, activity.ReadTime, activity.WriteTime, activity.ReadBytes, activity.WriteBytes }.All(double.IsFinite);
 
-    private static ComponentEstimate EstimateDisk(Disk disk, IReadOnlyDictionary<int, DiskActivity> activity, ComponentCatalog catalog)
+    private static ComponentEstimate EstimateDisk(Disk disk, Dictionary<int, DiskActivity> activity, ComponentCatalog catalog)
     {
         var known = catalog.Find(disk.Model);
         var profile = known ?? DiskProfile.Generic(disk.Model);

@@ -8,18 +8,22 @@ namespace JouleDesk;
 internal static class SpotPriceClient
 {
     private const string Endpoint = "https://api.porssisahko.net/v2/latest-prices.json";
-    private static readonly HttpClient Client = CreateClient();
+    private const string ProductName = "JouleDesk";
+    private const int MaxResponseBytes = 1_000_000;
+    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(15);
+    private static readonly BoundedDownload Download = new(MaxResponseBytes, Timeout, CreateUserAgent());
 
-    public static async Task<IReadOnlyList<SpotPrice>> FetchAsync(CancellationToken cancellationToken = default)
-    {
-        var json = await Client.GetStringAsync(Endpoint, cancellationToken);
-        return Parse(json);
-    }
+    public static async Task<IReadOnlyList<SpotPrice>> FetchAsync(CancellationToken cancellationToken = default) =>
+        Parse(await Download.ReadTextAsync(new Uri(Endpoint), cancellationToken));
 
     public static IReadOnlyList<SpotPrice> Parse(string json)
     {
         using var document = JsonDocument.Parse(json);
-        var prices = document.RootElement.GetProperty("prices").EnumerateArray().Select(item =>
+        var items = document.RootElement.GetProperty("prices");
+        if (items.GetArrayLength() > PriceLimits.MaxPerDownload)
+            throw new InvalidDataException(Localization.Translate("The API returned too many prices."));
+
+        var prices = items.EnumerateArray().Select(item =>
         {
             var end = item.GetProperty("endDate").GetDateTimeOffset();
 
@@ -33,11 +37,6 @@ internal static class SpotPriceClient
     }
 
     // The service is run by one person; naming the application lets them see what uses it.
-    private static HttpClient CreateClient()
-    {
-        var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
-        var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1";
-        client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("JouleDesk", version));
-        return client;
-    }
+    private static ProductInfoHeaderValue CreateUserAgent() =>
+        new(ProductName, Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1");
 }

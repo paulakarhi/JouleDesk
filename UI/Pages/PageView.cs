@@ -101,14 +101,16 @@ internal abstract class PageView : IDisposable
         }, selected);
 
     /// <summary>
-    /// Adds the ‹ and › buttons at the right end of the action row, for stepping through days or months.
+    /// Adds a pair of step buttons, by default ‹ and › at the right end of the action row, for stepping through days or months.
     /// The names are translation keys that tell assistive technology what the buttons do.
     /// </summary>
-    protected (ThemedButton Previous, ThemedButton Next) AddStepButtons(string previousName, string nextName, Action previous, Action next)
+    protected (ThemedButton Previous, ThemedButton Next) AddStepButtons(string previousName, string nextName, Action previous, Action next,
+        bool atLeft = false, string previousGlyph = "‹", string nextGlyph = "›")
     {
-        var nextOffset = Layout.Width - StepButtonWidth;
-        var previousButton = AddButton("‹", ResponsiveLayout.ActionButton(nextOffset - StepButtonWidth - 8, StepButtonWidth), previous);
-        var nextButton = AddButton("›", ResponsiveLayout.ActionButton(nextOffset, StepButtonWidth), next);
+        var nextOffset = atLeft ? StepButtonWidth + 8 : Layout.Width - StepButtonWidth;
+        var previousOffset = atLeft ? 0 : nextOffset - StepButtonWidth - 8;
+        var previousButton = AddButton(previousGlyph, ResponsiveLayout.ActionButton(previousOffset, StepButtonWidth), previous);
+        var nextButton = AddButton(nextGlyph, ResponsiveLayout.ActionButton(nextOffset, StepButtonWidth), next);
         previousButton.AccessibleName = Localization.Translate(previousName);
         nextButton.AccessibleName = Localization.Translate(nextName);
         previousButton.GlyphSize = StepGlyphSize;
@@ -137,11 +139,11 @@ internal abstract class PageView : IDisposable
     }
 
     protected LabeledTextField AddNumberField(string key, string label, double value, string unit, Rectangle bounds, bool enabled = true) =>
-        AddTextField(key, label, value.ToString("0.###", CultureInfo.CurrentCulture), unit, bounds, enabled);
+        AddTextField(key, label, value.ToString("0.###", CultureInfo.CurrentCulture), unit, bounds, SettingLimits.NumberLength, enabled);
 
-    protected LabeledTextField AddTextField(string key, string label, string value, string unit, Rectangle bounds, bool enabled = true)
+    protected LabeledTextField AddTextField(string key, string label, string value, string unit, Rectangle bounds, int maxLength, bool enabled = true)
     {
-        var field = new LabeledTextField(label, value, unit) { Bounds = bounds, Enabled = enabled, Name = key };
+        var field = new LabeledTextField(label, value, unit, maxLength) { Bounds = bounds, Enabled = enabled, Name = key };
         AddControl(field);
         fields[key] = field;
         return field;

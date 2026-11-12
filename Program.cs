@@ -26,6 +26,7 @@ internal static class Program
         try
         {
             var store = new UsageStore();
+            store.CompactBefore(FinnishTime.ToInstant(FinnishTime.Today.AddDays(-UsageStore.MinuteDetailDays)));
             var catalog = new ComponentCatalog();
             catalog.LoadCache(store.Folder);
             var monitor = new PowerMonitor(store, catalog, SensorReader.ReadAsync, SpotPriceClient.FetchAsync);

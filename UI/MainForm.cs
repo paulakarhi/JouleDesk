@@ -19,6 +19,7 @@ internal sealed class MainForm : FramelessForm, IPageHost
         (Page.Overview, "Overview"),
         (Page.Components, "Components"),
         (Page.History, "History"),
+        (Page.Minutes, "Minute by minute"),
         (Page.Prices, "Electricity prices"),
         (Page.Plan, "Electricity plan"),
         (Page.Settings, "Settings")
@@ -120,11 +121,15 @@ internal sealed class MainForm : FramelessForm, IPageHost
 
     private bool WideNavigation => ClientSize.Width >= WideNavigationFrom;
 
-    public void SelectPage(Page page)
+    public void SelectPage(Page page) => Navigate(page, null);
+
+    public void ShowDay(DateTime day) => Navigate(Page.Minutes, day);
+
+    private void Navigate(Page page, DateTime? day)
     {
         pageView.Dispose();
         currentPage = page;
-        pageView = CreatePage(page);
+        pageView = CreatePage(page, day);
         Viewport.ScrollTo(0);
         notice = "";
         noticeIsError = false;
@@ -251,11 +256,12 @@ internal sealed class MainForm : FramelessForm, IPageHost
             appIcon.Dispose();
     }
 
-    private PageView CreatePage(Page page) => page switch
+    private PageView CreatePage(Page page, DateTime? day = null) => page switch
     {
         Page.Overview => new OverviewPage(this),
         Page.Components => new ComponentsPage(this),
         Page.History => new HistoryPage(this),
+        Page.Minutes => new MinutesPage(this, day),
         Page.Prices => new PricesPage(this),
         Page.Plan => new PlanPage(this),
         _ => new SettingsPage(this)
@@ -333,7 +339,7 @@ internal sealed class MainForm : FramelessForm, IPageHost
     {
         var width = ClientSize.Width;
         var wide = WideNavigation;
-        var columns = width < 650 ? 2 : 3;
+        var columns = width < 480 ? 2 : 3;
         var rows = (navigation.Count + columns - 1) / columns;
         var navigationHeight = wide ? 0 : rows * 46 + 12;
 

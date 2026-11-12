@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace JouleDesk;
 
 internal delegate Task<IReadOnlyList<SpotPrice>> PriceSource(CancellationToken cancellationToken);
@@ -114,10 +116,10 @@ internal sealed class PowerMonitor : IDisposable
         {
             return;
         }
-        catch (Exception)
+        catch (Exception exception)
         {
             nextPriceFetch = DateTimeOffset.UtcNow + PriceSchedule.RetryInterval;
-            PriceStatus = Localization.Translate("Price fetch failed · using cache");
+            PriceStatus = Localization.Translate(DescribePriceFailure(exception));
         }
         finally
         {
@@ -162,6 +164,16 @@ internal sealed class PowerMonitor : IDisposable
         Stop();
         shutdown.Dispose();
     }
+
+    // Says what went wrong in terms the user can act on: the network, the data or the disk.
+    private static string DescribePriceFailure(Exception exception) => exception switch
+    {
+        HttpRequestException or OperationCanceledException => "Price service unreachable · using cache",
+        IOException or UnauthorizedAccessException => "Prices could not be saved · using cache",
+        JsonException or InvalidDataException or KeyNotFoundException or InvalidOperationException or FormatException =>
+            "Price data was invalid · using cache",
+        _ => "Price fetch failed · using cache"
+    };
 
     private void Apply(SensorReading sample, ApplicationSettings settings)
     {

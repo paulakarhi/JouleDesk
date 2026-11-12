@@ -8,16 +8,29 @@ internal static class SpotPrices
         var ordered = prices.OrderBy(price => price?.Start).ToList();
         if (ordered.Count == 0)
             throw new InvalidDataException(Localization.Translate("The API returned no prices."));
+        if (ordered.Count > PriceLimits.MaxCached)
+            throw new InvalidDataException(Localization.Translate("The API returned too many prices."));
 
         for (var index = 0; index < ordered.Count; index++)
         {
             var price = ordered[index];
-            if (price is null || price.End <= price.Start || !double.IsFinite(price.PriceCents))
+            if (price is null || price.End <= price.Start || price.End - price.Start > PriceLimits.LongestInterval ||
+                !PriceLimits.Cents.Contains(price.PriceCents))
                 throw new InvalidDataException(Localization.Translate("Invalid price interval."));
             if (index > 0 && ordered[index - 1].End > price.Start)
                 throw new InvalidDataException(Localization.Translate("Overlapping price intervals."));
         }
         return ordered;
+    }
+
+    /// <summary>The prices of the last <see cref="PriceLimits.CacheSpan"/>, counted back from the newest one.</summary>
+    public static IReadOnlyList<SpotPrice> Recent(IReadOnlyList<SpotPrice> prices)
+    {
+        if (prices.Count == 0)
+            return prices;
+
+        var cutoff = prices[^1].End - PriceLimits.CacheSpan;
+        return prices.Where(price => price.End > cutoff).ToList();
     }
 
     /// <summary>The price in effect at an instant, or null when the list has none.</summary>

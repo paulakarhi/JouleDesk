@@ -137,7 +137,7 @@ internal sealed class UsageChart : ChartControl<DayUsage>
     private static ChartAxis AxisFor(MonthUsage month) =>
         ChartAxis.For(0, month.Days.Max(day => day.Kwh), MinimumAxisRange);
 
-    private static IReadOnlyList<(string Text, TextStyle Style)> TooltipLines(DayUsage day)
+    private static List<(string Text, TextStyle Style)> TooltipLines(DayUsage day)
     {
         var partial = day.MissingKwh > 0;
         var lines = new List<(string, TextStyle)>

@@ -22,6 +22,9 @@ dotnet_separate_import_directive_groups = false
 # The controls are built in code, never in the Windows Forms designer.
 dotnet_diagnostic.WFO1000.severity = none
 
+# Dates and numbers are shown in the interface language the user chose, which Localization sets as the current culture.
+dotnet_diagnostic.CA1305.severity = none
+
 csharp_style_namespace_declarations = file_scoped:warning
 csharp_using_directive_placement = outside_namespace:warning
 dotnet_diagnostic.IDE0005.severity = warning

@@ -6,6 +6,7 @@ internal enum Page
     Overview,
     Components,
     History,
+    Minutes,
     Prices,
     Plan,
     Settings

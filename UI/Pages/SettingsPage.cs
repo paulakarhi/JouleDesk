@@ -35,7 +35,8 @@ internal sealed class SettingsPage : PageView
         AddNumberField("other", "Other parts · combined / fallback", settings.OtherWatts, "W", layout.FieldCell(2, top));
         AddNumberField("efficiency", "Estimated PSU efficiency", settings.Efficiency, "%", layout.FieldCell(3, top));
 
-        AddTextField("catalog", "Component database HTTPS URL (optional)", settings.CatalogUrl, "", layout.CardRow(layout.CatalogTop, ResponsiveLayout.FieldHeight));
+        AddTextField("catalog", "Component database HTTPS URL (optional)", settings.CatalogUrl, "", layout.CardRow(layout.CatalogTop, ResponsiveLayout.FieldHeight),
+            SettingLimits.UrlLength);
         AddAsyncButton("Get update", layout.CardRow(layout.CatalogTop + 96, 42), GetCatalogUpdateAsync);
 
         AddButton("Save settings", layout.ButtonCell(0, layout.SettingsSaveTop), () => Save(announce: true), selected: true);

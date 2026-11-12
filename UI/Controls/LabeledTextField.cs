@@ -16,7 +16,7 @@ internal sealed class LabeledTextField : Control
     private readonly TextBox editor;
     private readonly string unit;
 
-    public LabeledTextField(string label, string value, string unit)
+    public LabeledTextField(string label, string value, string unit, int maxLength)
     {
         Label = label;
         this.unit = unit;
@@ -28,6 +28,7 @@ internal sealed class LabeledTextField : Control
         editor = new TextBox
         {
             Text = value,
+            MaxLength = maxLength,
             BorderStyle = BorderStyle.None,
             BackColor = Background,
             ForeColor = Foreground,

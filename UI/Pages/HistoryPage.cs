@@ -47,6 +47,7 @@ internal sealed class HistoryPage : PageView
         (previousMonth, nextMonth) = AddStepButtons("Previous month", "Next month", () => MoveMonth(-1), () => MoveMonth(1));
 
         chart = new UsageChart { Bounds = Layout.ChartCard };
+        chart.ItemClicked += day => Host.ShowDay(day.Date);
         AddControl(chart);
     }
 
@@ -56,7 +57,8 @@ internal sealed class HistoryPage : PageView
         var rows = DaysOfMonth().Select(day => ToRow(day.Key, day.Value, settings)).ToList();
 
         var bottom = PaintTable(g, ResponsiveLayout.BelowChart, rows, "DATE / RECORDED ENERGY", "COST");
-        var note = $"{Localization.Translate(TariffCalculator.Name(settings.PriceMode))} · {Localization.Translate("Change the pricing mode in Electricity plan.")}";
+        var note = $"{Localization.Translate(TariffCalculator.Name(settings.PriceMode))} · {Localization.Translate("Change the pricing mode in Electricity plan.")} " +
+                   Localization.Translate("Click a day on the curve to see it minute by minute.");
         g.DrawLabel(note, new Rectangle(ResponsiveLayout.Margin, bottom + 12, Layout.Width, 60), new TextStyle(10, Accent, Wrap: true));
     }
 

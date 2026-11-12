@@ -24,6 +24,9 @@ internal abstract class ChartControl<TItem> : Control
         AccessibleRole = AccessibleRole.Chart;
     }
 
+    /// <summary>Raised when the user clicks an item. A chart whose items do nothing when clicked has no listener.</summary>
+    public event Action<TItem>? ItemClicked;
+
     /// <summary>The item under the pointer, or null.</summary>
     protected TItem? Hovered { get; private set; }
 
@@ -39,11 +42,19 @@ internal abstract class ChartControl<TItem> : Control
     {
         base.OnMouseMove(e);
         var item = ItemAt(e.Location);
+        Cursor = item is not null && ItemClicked is not null ? Cursors.Hand : Cursors.Default;
         if (!Equals(item, Hovered))
         {
             Hovered = item;
             Invalidate();
         }
+    }
+
+    protected override void OnMouseClick(MouseEventArgs e)
+    {
+        base.OnMouseClick(e);
+        if (e.Button == MouseButtons.Left && ItemAt(e.Location) is { } item)
+            ItemClicked?.Invoke(item);
     }
 
     protected override void OnMouseLeave(EventArgs e)

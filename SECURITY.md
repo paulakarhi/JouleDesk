@@ -14,4 +14,5 @@ Only the latest release gets fixes.
 JouleDesk runs with the rights of the signed-in user. It needs no administrator rights and installs no driver. It
 makes only the network requests that the README describes under Privacy. It accepts a drive profile catalog only from
 an HTTPS address that you enter, does not follow redirects, limits the size of the download and checks every value in
-it before use.
+it before use. The spot prices are handled the same way. Files in the data folder are read with size limits and
+checked before use.
