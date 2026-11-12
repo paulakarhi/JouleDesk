@@ -11,6 +11,9 @@ internal abstract class ChartControl<TItem> : Control
     where TItem : class
 {
     protected const int HeaderInset = 20;
+
+    /// <summary>The month, day or hour a chart shows, large enough to see at a glance.</summary>
+    private static readonly TextStyle PeriodStyle = new(14, Foreground, Bold: true);
     private const int PlotLeft = 52;
     private const int PlotRight = 20;
     private const int PlotTop = 100;
@@ -80,11 +83,11 @@ internal abstract class ChartControl<TItem> : Control
     protected void PaintHeader(Graphics g, string heading, string side, string summary)
     {
         var width = Width - HeaderInset * 2;
-        var sideWidth = side.Length == 0 ? 0 : TextRenderer.MeasureText(side, GetFont(TextStyles.Caption.Size, bold: true)).Width + 8;
+        var sideWidth = side.Length == 0 ? 0 : TextRenderer.MeasureText(side, GetFont(PeriodStyle.Size, PeriodStyle.Bold)).Width + 8;
 
         g.DrawLabel(heading, new Rectangle(HeaderInset, 17, width - sideWidth, 23), TextStyles.Caption);
         if (side.Length > 0)
-            g.DrawLabel(side, new Rectangle(HeaderInset + width - sideWidth, 17, sideWidth, 23), TextStyles.Caption with { Align = TextAlign.Right });
+            g.DrawLabel(side, new Rectangle(HeaderInset + width - sideWidth, 13, sideWidth, 30), PeriodStyle with { Align = TextAlign.Right });
         if (summary.Length > 0)
             g.DrawLabel(summary, new Rectangle(HeaderInset, 44, width, 40), TextStyles.Hint);
     }

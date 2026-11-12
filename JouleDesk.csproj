@@ -10,7 +10,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>JouleDesk</RootNamespace>
     <AssemblyName>JouleDesk</AssemblyName>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <Product>JouleDesk</Product>
     <Authors>Paula Karhi</Authors>
     <Company>Paula Karhi</Company>
