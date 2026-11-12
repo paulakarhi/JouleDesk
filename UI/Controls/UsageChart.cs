@@ -59,7 +59,8 @@ internal sealed class UsageChart : ChartControl<DayUsage>
     {
         var g = e.Graphics;
         PaintCard(g);
-        PaintHeader(g, Heading, month is null ? "" : month.Month.ToString("MMMM yyyy"), Summary());
+        PaintHeader(g, Heading, month is null ? "" : month.Month.ToString("MMMM yyyy"), "");
+        PaintMonthTotal(g);
 
         if (!HasData)
         {
@@ -79,6 +80,19 @@ internal sealed class UsageChart : ChartControl<DayUsage>
     }
 
     private bool HasData => month is { Kwh: > 0 };
+
+    // What the month has used and cost so far, in large type under the heading.
+    private void PaintMonthTotal(Graphics g)
+    {
+        if (!HasData)
+            return;
+
+        var total = $"{month!.Kwh:F2} kWh · {DisplayFormat.Euros(month.Euros, month.MissingKwh > 0, 2)}";
+        g.DrawLabel(total, new Rectangle(HeaderInset, 42, Width - HeaderInset * 2, 36), new TextStyle(20, Accent, Bold: true));
+        if (month.Highest is { } highest)
+            g.DrawLabel(Localization.Format("highest {0} kWh on {1}", $"{highest.Kwh:F2}", highest.Date.ToString("d.M.")),
+                new Rectangle(HeaderInset, 54, Width - HeaderInset * 2, 18), TextStyles.Hint with { Align = TextAlign.Right });
+    }
 
     // The first day and every fifth day are numbered; a number that would touch the previous one is left out.
     private void PaintDayLabels(Graphics g)
